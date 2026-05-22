@@ -1,3 +1,10 @@
+## Live Deployment
+
+🚀 Live Application:
+https://childsafetysystemai.onrender.com/
+
+
+
 # Child Safety System AI
 
 An AI-powered child safety monitoring platform designed to detect unsafe interactions, harmful content, and suspicious activities in real time.
