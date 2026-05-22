@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Detection Result</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #4e73df, #1cc88a);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 520px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        h2 {
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 25px;
+            color: #333;
+        }
+
+        p {
+            margin: 10px 0;
+            font-size: 15px;
+        }
+
+        strong {
+            color: #444;
+        }
+
+        ul {
+            padding-left: 18px;
+            margin-top: 8px;
+            margin-bottom: 15px;
+        }
+
+        li {
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .danger {
+            color: #e74a3b;
+            font-weight: bold;
+        }
+
+        .safe {
+            color: #1cc88a;
+            font-weight: bold;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            transition: 0.3s ease;
+        }
+
+        .back-btn {
+            background: #6c757d;
+            color: white;
+        }
+
+        .back-btn:hover {
+            background: #5a6268;
+        }
+
+        .sos-btn {
+            background: #e74a3b;
+            color: white;
+        }
+
+        .sos-btn:hover {
+            background: #c0392b;
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                padding: 20px;
+            }
+
+            h2 {
+                font-size: 18px;
+            }
+
+            p, li {
+                font-size: 13px;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Detection Result</h2>
+
+    <p><strong>Emotion:</strong> {{ emotion }}</p>
+    <p><strong>Confidence:</strong> {{ confidence }}</p>
+    
+    <p><strong>Speech:</strong> {{ speech_text }}</p>
+
+    <p><strong>Probabilities:</strong></p>
+    <ul>
+        {% for key, value in probabilities.items() %}
+        <li>{{ key }} : {{ value }}</li>
+        {% endfor %}
+    </ul>
+
+    <p><strong>Status:</strong>
+        <span class="{% if 'Distress' in status %}danger{% else %}safe{% endif %}">
+            {{ status }}
+        </span>
+    </p>
+
+    <form action="/">
+        <button class="back-btn">🔙 Back</button>
+    </form>
+
+    <form action="/sos">
+        <button class="sos-btn">🚨 Manual SOS</button>
+    </form>
+
+</div>
+
+</body>
+</html>

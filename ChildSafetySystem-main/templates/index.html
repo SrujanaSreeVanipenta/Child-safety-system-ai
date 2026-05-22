@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Advanced Child Safety System</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #4e73df, #1cc88a);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: white;
+            width: 95%;
+            max-width: 500px;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .detect-btn {
+            background-color: #4e73df;
+            color: white;
+        }
+
+        .detect-btn:hover {
+            background-color: #2e59d9;
+        }
+
+        .sos-btn {
+            background-color: #e74a3b;
+            color: white;
+        }
+
+        .sos-btn:hover {
+            background-color: #c0392b;
+        }
+
+        .status-text {
+            margin-top: 15px;
+            font-weight: bold;
+            color: #2e59d9;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>👶 Advanced Child Safety System</h2>
+
+    <!-- Detection Form -->
+    <button class="detect-btn" onclick="startRecording()">
+🎤 Start Voice Detection
+</button>
+
+    <!-- Manual SOS -->
+    <button class="sos-btn" onclick="sendSOS()">🚨 SOS Emergency</button>
+
+    <div id="recordingMessage" class="status-text"></div>
+</div>
+
+<script>
+
+let mediaRecorder;
+let audioChunks = [];
+
+async function startRecording() {
+
+    const msg = document.getElementById("recordingMessage");
+
+    msg.innerText = "🎤 Recording... Speak now";
+
+    // -------- GPS LOCATION --------
+    let latitude = "";
+    let longitude = "";
+
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            latitude = position.coords.latitude;
+            longitude = position.coords.longitude;
+        });
+    }
+
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+    const audioContext = new AudioContext();
+    const source = audioContext.createMediaStreamSource(stream);
+    const processor = audioContext.createScriptProcessor(4096, 1, 1);
+
+    const samples = [];
+
+    source.connect(processor);
+    processor.connect(audioContext.destination);
+
+    processor.onaudioprocess = function(e) {
+        const input = e.inputBuffer.getChannelData(0);
+        samples.push(new Float32Array(input));
+    };
+
+    setTimeout(async () => {
+
+        document.getElementById("recordingMessage").innerText =
+        "Processing audio...";
+
+        processor.disconnect();
+        source.disconnect();
+
+        const flatSamples = flatten(samples);
+        const wavBlob = encodeWAV(flatSamples, audioContext.sampleRate);
+
+        const formData = new FormData();
+        formData.append("audio", wavBlob, "recording.wav");
+
+        // -------- SEND GPS --------
+        formData.append("latitude", latitude);
+        formData.append("longitude", longitude);
+
+        const response = await fetch("/detect", {
+            method: "POST",
+            body: formData
+        });
+
+        const html = await response.text();
+
+        document.open();
+        document.write(html);
+        document.close();
+
+    }, 5000);
+}
+
+function flatten(arrays) {
+    let length = 0;
+    arrays.forEach(a => length += a.length);
+    const result = new Float32Array(length);
+    let offset = 0;
+    arrays.forEach(a => {
+        result.set(a, offset);
+        offset += a.length;
+    });
+    return result;
+}
+
+function encodeWAV(samples, sampleRate) {
+
+    const buffer = new ArrayBuffer(44 + samples.length * 2);
+    const view = new DataView(buffer);
+
+    writeString(view, 0, 'RIFF');
+    view.setUint32(4, 36 + samples.length * 2, true);
+    writeString(view, 8, 'WAVE');
+
+    writeString(view, 12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, 1, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * 2, true);
+    view.setUint16(32, 2, true);
+    view.setUint16(34, 16, true);
+
+    writeString(view, 36, 'data');
+    view.setUint32(40, samples.length * 2, true);
+
+    let offset = 44;
+    for (let i = 0; i < samples.length; i++, offset += 2) {
+        const s = Math.max(-1, Math.min(1, samples[i]));
+        view.setInt16(offset, s * 32767, true);
+    }
+
+    return new Blob([view], { type: "audio/wav" });
+}
+
+function writeString(view, offset, string) {
+    for (let i = 0; i < string.length; i++) {
+        view.setUint8(offset + i, string.charCodeAt(i));
+    }
+}
+
+function sendSOS(){
+
+    const msg = document.getElementById("recordingMessage");
+    msg.innerText = "📍 Getting location...";
+
+    if(navigator.geolocation){
+
+        navigator.geolocation.getCurrentPosition(function(position){
+
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+
+            window.location.href =
+            `/sos?latitude=${latitude}&longitude=${longitude}`;
+
+        }, function(){
+
+            alert("Unable to fetch GPS location");
+            window.location.href = "/sos";
+
+        });
+
+    }else{
+
+        alert("Geolocation not supported");
+        window.location.href = "/sos";
+
+    }
+}
+
+</script>
+
+</body>
+</html>
