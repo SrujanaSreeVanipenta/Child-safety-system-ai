@@ -19,16 +19,15 @@ An AI-powered child safety monitoring platform designed to detect unsafe interac
 ## Tech Stack
 
 ### Frontend
-- React.js
+
 - HTML
 - CSS
 - JavaScript
 
 ### Backend
-- Node.js / Spring Boot
+Flask
 
-### Database
-- MongoDB / MySQL
+
 
 ### Deployment
 - Render
@@ -36,8 +35,4 @@ An AI-powered child safety monitoring platform designed to detect unsafe interac
 
 ## Installation
 
-### Clone Repository
 
-```bash
-git clone https://github.com/SrujanaSreeVanipenta/Child-safety-system-ai.git
-cd Child-safety-system-ai
